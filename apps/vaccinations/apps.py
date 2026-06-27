@@ -1,0 +1,9 @@
+from django.apps import AppConfig
+
+
+class VaccinationsConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'apps.vaccinations'
+
+    def ready(self):
+        import apps.vaccinations.signals

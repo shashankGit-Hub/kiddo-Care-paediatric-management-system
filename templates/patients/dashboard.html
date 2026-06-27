@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pediatric Dashboard - {{ patient.first_name }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans minimal-scrollbar">
+
+    <nav class="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-50">
+        <h1 class="text-xl font-bold text-blue-600 flex items-center gap-2">
+            🩺 LittleSteps <span class="text-xs bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full font-semibold">Pediatric Engine</span>
+        </h1>
+        <div class="text-sm text-slate-500 font-medium">Logged in as Clinician</div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-6 space-y-6">
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="space-y-2">
+                <div class="flex items-center gap-3">
+                    <h2 class="text-2xl font-bold tracking-tight text-slate-900">{{ patient.first_name }} {{ patient.last_name }}</h2>
+                    <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full {% if patient.gender == 'M' %}bg-blue-50 text-blue-700{% else %}bg-pink-50 text-pink-700{% endif %}">
+                        {% if patient.gender == 'M' %}Male{% else %}Female{% endif %}
+                    </span>
+                    <span class="bg-slate-100 text-slate-700 px-2.5 py-0.5 text-xs font-semibold rounded-full">Blood Type: {{ patient.blood_type }}</span>
+                </div>
+                <p class="text-sm text-slate-500 font-medium">Born: **{{ patient.date_of_birth }}** | Primary Guardian: **{{ patient.guardian_name }}** ({{ patient.contact_number }})</p>
+            </div>
+            <div class="bg-blue-50/50 border border-blue-100 p-4 rounded-xl text-sm space-y-1">
+                <p class="text-slate-600">**Allergies:** <span class="text-red-600 font-semibold">{{ patient.allergies|default:"None" }}</span></p>
+                <p class="text-slate-600">**Chronic Conditions:** <span class="font-medium text-slate-900">{{ patient.chronic_conditions|default:"None" }}</span></p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <div class="lg:col-span-2 space-y-6">
+
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
+                    <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">📈 Weight Growth Trajectory</h3>
+                    <div class="h-64">
+                        <canvas id="weightChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-200">
+                        <h3 class="text-lg font-bold text-slate-900">📋 Historical Check-up Biometrics</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-500 uppercase text-xs font-semibold border-b border-slate-200">
+                                <tr>
+                                    <th class="px-6 py-3">Date</th>
+                                    <th class="px-6 py-3">Weight (kg)</th>
+                                    <th class="px-6 py-3">Height (cm)</th>
+                                    <th class="px-6 py-3">Head Circum. (cm)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                {% for visit in visits %}
+                                <tr class="hover:bg-slate-50/80 transition-colors">
+                                    <td class="px-6 py-4 font-semibold text-slate-900">{{ visit.visit_date|date:"Y-m-d" }}</td>
+                                    <td class="px-6 py-4 text-slate-600">{{ visit.weight_kg }} kg</td>
+                                    <td class="px-6 py-4 text-slate-600">{{ visit.height_cm }} cm</td>
+                                    <td class="px-6 py-4 text-slate-600">{{ visit.head_circumference_cm|default:"--" }} cm</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="px-6 py-8 text-center text-slate-400 font-medium">No biometric logs found for this patient.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
+                    <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">💉 Dynamic Vaccination Schedule</h3>
+                    <div class="space-y-3 max-h-[500px] overflow-y-auto pr-1 minimal-scrollbar">
+                        {% for record in vaccinations %}
+                        <div class="p-3.5 border border-slate-100 bg-slate-50/50 rounded-xl flex justify-between items-start hover:border-slate-200 transition-all">
+                            <div class="space-y-1">
+                                <h4 class="font-bold text-slate-900 text-sm">{{ record.vaccine.name }}</h4>
+                                <p class="text-xs text-slate-500">Target: {{ record.vaccine.disease_targeted }}</p>
+                                <p class="text-xs font-medium text-slate-600">Due: {{ record.scheduled_date }}</p>
+                            </div>
+                            <span class="text-[10px] px-2.5 py-1 font-bold rounded-full uppercase tracking-wider
+                                {% if record.status == 'ADMINISTERED' %}bg-emerald-100 text-emerald-800
+                                {% elif record.status == 'DELAYED' %}bg-amber-100 text-amber-800
+                                {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                {{ record.status }}
+                            </span>
+                        </div>
+                        {% empty %}
+                        <p class="text-sm text-slate-400 text-center py-6">No immunizations map generated.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    // Automatically extract the active patient ID right out of the browser's current URL path
+const pathSegments = window.location.pathname.split('/');
+const patientId = pathSegments[pathSegments.indexOf('patients') + 1] || "{{ patient.id }}";
+
+console.log("Fetching telemetry analytics stream for Patient ID:", patientId);
+
+fetch(`/api/patients/${patientId}/growth-analytics/`)
+    .then(response => {
+        if (!response.ok) throw new Error("Patient growth data resource offline or missing.");
+        return response.json();
+    })
+    .then(data => {
+        const ctx = document.getElementById('weightChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    {
+                        label: 'Patient Weight (kg)',
+                        data: data.weight_kg,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.05)',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'WHO Median Baseline (kg)',
+                        data: data.who_median_weight,
+                        borderColor: '#10b981',
+                        borderDash: [6, 6],
+                        borderWidth: 2,
+                        tension: 0.1,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { boxWidth: 12, font: { weight: 'bold' } } }
+                },
+                scales: {
+                    y: { grid: { color: '#f1f5f9' }, title: { display: true, text: 'Mass (Kilograms)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    })
+    .catch(err => console.error("Could not compile growth telemetry data streams:", err));
+    </script>
+</body>
+</html>

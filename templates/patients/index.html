@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LittleSteps - Patient Registry</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+    <nav class="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-50">
+        <h1 class="text-xl font-bold text-blue-600 flex items-center gap-2">
+            🩺 LittleSteps<span class="text-xs bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full font-semibold">Pediatric Engine</span>
+        </h1>
+        <div class="text-sm text-slate-500 font-medium">Active Session: Clinician</div>
+    </nav>
+    <main class="max-w-7xl mx-auto p-6 space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Patient Registry Directory</h2>
+                <p class="text-sm text-slate-500">Manage, search, and audit pediatric profiles across your database infrastructure.</p>
+            </div>
+            <a href="/admin/patients/patient/add/" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-4 py-2.5 rounded-xl shadow-xs transition-colors text-center">
+                ➕ Register New Patient
+            </a>
+        </div>
+        <form method="GET" action="{% url 'patient-list' %}" class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div class="space-y-1 md:col-span-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-400">Search Fields</label>
+                <input type="text" name="search" value="{{ search_query }}" placeholder="Search by name, guardian, or phone pattern..."
+                       class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-hidden focus:border-blue-500 transition-colors">
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-400">Gender Status</label>
+                <select name="gender" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-hidden">
+                    <option value="">All Genders</option>
+                    <option value="M" {% if gender_filter == "M" %}selected{% endif %}>Male</option>
+                    <option value="F" {% if gender_filter == "F" %}selected{% endif %}>Female</option>
+                </select>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="submit" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm py-2 rounded-xl transition-colors cursor-pointer">
+                    Filter Directory
+                </button>
+                {% if search_query or gender_filter %}
+                <a href="{% url 'patient-list' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold py-2 px-3 rounded-xl transition-colors flex items-center justify-center">
+                    Reset
+                </a>
+                {% endif %}
+            </div>
+        </form>
+        <div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 text-slate-500 uppercase text-xs font-bold tracking-wider border-b border-slate-200">
+                        <tr>
+                            <th class="px-6 py-4">Full Identity Name</th>
+                            <th class="px-6 py-4">Birthdate</th>
+                            <th class="px-6 py-4">Gender</th>
+                            <th class="px-6 py-4">Guardian Liaison</th>
+                            <th class="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-medium">
+                        {% for patient in patients %}
+                        <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-slate-900 text-base">{{ patient.first_name }} {{ patient.last_name }}</div>
+                                <div class="text-xs text-slate-400 font-normal">System Reference Code: ID #{{ patient.id }}</div>
+                            </td>
+                            <td class="px-6 py-4 text-slate-600">{{ patient.date_of_birth }}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2.5 py-0.5 text-xs font-bold rounded-full {% if patient.gender == 'M' %}bg-blue-50 text-blue-700{% else %}bg-pink-50 text-pink-700{% endif %}">
+                                    {% if patient.gender == 'M' %}Male{% else %}Female{% endif %}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-slate-900 font-semibold">{{ patient.guardian_name }}</div>
+                                <div class="text-xs text-slate-500 font-normal">{{ patient.contact_number }}</div>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <a href="{% url 'patient-dashboard' patient.id %}" class="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold px-3 py-2 rounded-lg transition-all">
+                                    Launch Dashboard 📊
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                                <p class="text-base font-semibold">No pediatric records match your structural filters.</p>
+                                <p class="text-xs text-slate-400 mt-1">Try resetting filters or registering a profile to begin.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
