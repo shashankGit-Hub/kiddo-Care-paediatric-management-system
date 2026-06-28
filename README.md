@@ -141,23 +141,6 @@ http://127.0.0.1:8000/
 
 ---
 
-# 📸 Screenshots
-
-Add screenshots here after capturing your application.
-
-Example:
-
-```
-screenshots/
-    home.png
-    patient_registration.png
-    patient_list.png
-    visit_page.png
-    vaccination_page.png
-```
-
----
-
 # 🔮 Future Enhancements
 
 * Appointment Scheduling
